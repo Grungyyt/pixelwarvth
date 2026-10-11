@@ -5,6 +5,7 @@ export default function PixelCanvas({ pixels, onPlace, onPick, pickMode, overlay
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
   const wrapRef = useRef(null);
+  const scrollRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [hover, setHover] = useState(null);
@@ -97,10 +98,20 @@ export default function PixelCanvas({ pixels, onPlace, onPick, pickMode, overlay
     }
     if (!disabled) onPlace(p.x, p.y);
   };
-  const onWheel = (e) => {
-    // zoom molette
-    setScale((s) => Math.min(20, Math.max(0.2, s * (e.deltaY < 0 ? 1.15 : 0.87))));
-  };
+  // molette interceptée en natif (non-passif) : seule la map zoome,
+  // la page ne scrolle pas et le navigateur ne zoome pas (ctrl+molette inclus)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheelNative = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const f = e.deltaY < 0 ? 1.15 : 0.87;
+      setScale((s) => Math.min(20, Math.max(0.2, s * f)));
+    };
+    el.addEventListener('wheel', onWheelNative, { passive: false });
+    return () => el.removeEventListener('wheel', onWheelNative);
+  }, []);
 
   return (
     <div className="canvas-wrap" ref={wrapRef}>
@@ -114,11 +125,11 @@ export default function PixelCanvas({ pixels, onPlace, onPick, pickMode, overlay
       </div>
       <div
         className="canvas-scroll"
+        ref={scrollRef}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={() => { drag.current = null; setHover(null); }}
-        onWheel={onWheel}
       >
         <div style={{ transform: `translate(${offset.x}px, ${offset.y}px)`, position: 'relative' }}>
           <canvas
