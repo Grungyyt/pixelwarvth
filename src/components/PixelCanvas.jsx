@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { SIZE, PALETTE, hexToRgb } from '../lib/palette';
 
-export default function PixelCanvas({ pixels, onPlace, selectedColor, disabled }) {
+export default function PixelCanvas({ pixels, onPlace, onPick, pickMode, overlay, selectedColor, disabled }) {
   const canvasRef = useRef(null);
+  const overlayRef = useRef(null);
   const wrapRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -43,6 +44,26 @@ export default function PixelCanvas({ pixels, onPlace, selectedColor, disabled }
     ctx.drawImage(off, 0, 0);
   }, [pixels]);
 
+  // fantôme : l'image à construire, semi-transparente par-dessus
+  useEffect(() => {
+    const c = overlayRef.current;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    if (!overlay || !overlay.indices) return;
+    const { w, h, indices } = overlay;
+    const img = ctx.createImageData(w, h);
+    const rgbCache = PALETTE.map(hexToRgb);
+    for (let i = 0; i < indices.length; i++) {
+      if (indices[i] === 255) continue; // transparent
+      const [r, g, b] = rgbCache[indices[i]] || rgbCache[0];
+      const o = i * 4;
+      img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b; img.data[o + 3] = 255;
+    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.putImageData(img, 0, 0);
+  }, [overlay]);
+
   const toPixel = useCallback((e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / rect.width * SIZE);
@@ -67,10 +88,14 @@ export default function PixelCanvas({ pixels, onPlace, selectedColor, disabled }
   const onMouseUp = (e) => {
     const wasDrag = drag.current?.moved;
     drag.current = null;
-    if (!wasDrag && !disabled) {
-      const p = toPixel(e);
-      if (p.x >= 0 && p.y >= 0 && p.x < SIZE && p.y < SIZE) onPlace(p.x, p.y);
+    if (wasDrag) return;
+    const p = toPixel(e);
+    if (p.x < 0 || p.y < 0 || p.x >= SIZE || p.y >= SIZE) return;
+    if (pickMode && onPick) {
+      onPick(p.x, p.y);
+      return;
     }
+    if (!disabled) onPlace(p.x, p.y);
   };
   const onWheel = (e) => {
     // zoom molette
@@ -85,6 +110,7 @@ export default function PixelCanvas({ pixels, onPlace, selectedColor, disabled }
         <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}>centrer</button>
         <span className="zoom">{Math.round(scale * 100)}%</span>
         {hover && <span className="coords">x:{hover.x} y:{hover.y}</span>}
+        {pickMode && <span className="coords pick">— clique sur le canvas pour placer</span>}
       </div>
       <div
         className="canvas-scroll"
@@ -94,7 +120,7 @@ export default function PixelCanvas({ pixels, onPlace, selectedColor, disabled }
         onMouseLeave={() => { drag.current = null; setHover(null); }}
         onWheel={onWheel}
       >
-        <div style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}>
+        <div style={{ transform: `translate(${offset.x}px, ${offset.y}px)`, position: 'relative' }}>
           <canvas
             ref={canvasRef}
             width={SIZE}
@@ -102,7 +128,21 @@ export default function PixelCanvas({ pixels, onPlace, selectedColor, disabled }
             className="pixel-canvas"
             style={{ width: SIZE * scale, height: SIZE * scale }}
           />
-          {hover && (
+          {overlay && overlay.indices && (
+            <canvas
+              ref={overlayRef}
+              width={overlay.w}
+              height={overlay.h}
+              className="ghost-canvas"
+              style={{
+                width: overlay.w * scale,
+                height: overlay.h * scale,
+                left: overlay.x * scale,
+                top: overlay.y * scale,
+              }}
+            />
+          )}
+          {hover && !pickMode && (
             <div
               className="hover-box"
               style={{

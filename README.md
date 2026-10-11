@@ -56,6 +56,15 @@ Possible mais plus pénible : il faut 2 projets Vercel (un pour le front, un pou
 - `GET /api/stock?clientId=` : stock restant
 - `GET /api/health`
 
+## Import d'image
+
+Bouton "importer une image" : choisis un fichier (png/jpg/webp), règle la
+largeur/hauteur (max 256x256, proportions verrouillées ou non), place le
+coin via x/y ou en cliquant sur le canvas. L'image est convertie vers la
+palette 16 couleurs (le transparent est ignoré), un fantôme s'affiche sur
+le canvas, et la construction pose les pixels toute seule au rythme du
+stock (pauses/reprise/déplacement possibles, survit au reload).
+
 ## Régler le stock
 
 Voir `api/_lib/config.js` : `MAX_STOCK = 10`, `REFILL_INTERVAL_MS = 3000`.
