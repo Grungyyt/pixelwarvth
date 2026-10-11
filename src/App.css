@@ -1,0 +1,40 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #cfcfcf; color: #111; font: 14px/1.4 Verdana, Geneva, sans-serif; }
+#root { min-height: 100svh; }
+
+.app { min-height: 100svh; display: flex; flex-direction: column; }
+
+.topbar {
+  background: #f2f2f2; border-bottom: 2px solid #111;
+  padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+}
+.title { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.logo { width: 14px; height: 14px; background: #111; display: inline-block; box-shadow: 4px 4px 0 #888; }
+.meta { color: #555; font-size: 12px; }
+
+.stockbox { display: flex; align-items: center; gap: 8px; }
+.pips { display: inline-flex; gap: 2px; }
+.pips i { width: 11px; height: 11px; background: #fff; border: 1px solid #111; display: inline-block; }
+.pips i.on { background: #111; }
+.stocktxt { font-size: 12px; color: #333; }
+
+.err { background: #ffe1e1; border-bottom: 2px solid #111; padding: 6px 12px; font-size: 13px; }
+
+.main { flex: 1; display: flex; min-height: 0; }
+.loading { margin: auto; color: #444; }
+
+.canvas-wrap { flex: 1; display: flex; flex-direction: column; min-height: 60vh; }
+.canvas-toolbar { display: flex; gap: 6px; align-items: center; padding: 6px 10px; background: #e4e4e4; border-bottom: 2px solid #111; font-size: 12px; }
+.canvas-toolbar button { border: 1px solid #111; background: #fff; padding: 2px 9px; cursor: pointer; font-size: 12px; border-radius: 0; }
+.canvas-toolbar button:active { background: #111; color: #fff; }
+.canvas-toolbar .zoom, .coords { color: #444; font-family: monospace; }
+.canvas-scroll { flex: 1; overflow: hidden; background: #bdbdbd; background-image: linear-gradient(45deg, #c6c6c6 25%, transparent 25%), linear-gradient(-45deg, #c6c6c6 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #c6c6c6 75%), linear-gradient(-45deg, transparent 75%, #c6c6c6 75%); background-size: 16px 16px; display: grid; place-items: center; cursor: crosshair; }
+.pixel-canvas { image-rendering: pixelated; background: #fff; border: 2px solid #111; position: relative; }
+.hover-box { position: absolute; outline: 1px solid #000; pointer-events: none; }
+
+.dock { background: #f2f2f2; border-top: 2px solid #111; padding: 8px 10px 10px; }
+.colors { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.sw { width: 26px; height: 26px; border: 1px solid #111; cursor: pointer; border-radius: 0; padding: 0; }
+.sw.on { outline: 2px solid #111; outline-offset: 1px; }
+.hint { text-align: center; color: #555; font-size: 11px; margin-top: 6px; }
