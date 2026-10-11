@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SIZE } from '../lib/palette';
 import { loadFileAsImage, convertImage, fitRatio, etaText, MAX_IMPORT_W, MAX_IMPORT_H } from '../lib/image';
 
-export default function ImportPanel({ draftPos, setDraftPos, picking, setPicking, onDraftSize, onStart, onClose }) {
+export default function ImportPanel({ draftPos, setDraftPos, picking, setPicking, onDraftSize, unlimited, onStart, onClose }) {
   const [src, setSrc] = useState(null); // { img, w, h }
   const [fileName, setFileName] = useState('');
   const [loadErr, setLoadErr] = useState(null);
@@ -118,8 +118,8 @@ export default function ImportPanel({ draftPos, setDraftPos, picking, setPicking
 
             {conv && (
               <div className="sheet-note">
-                {conv.opaque} pixels à poser — environ {etaText(conv.opaque)} au rythme du stock.
-                Les zones transparentes sont ignorées.
+                {conv.opaque} pixels à poser{unlimited ? ' — en quelques secondes.' : ` — environ ${etaText(conv.opaque)} au rythme du stock.`}
+                {' '}Les zones transparentes sont ignorées.
               </div>
             )}
 

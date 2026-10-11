@@ -6,7 +6,7 @@ import { getOrCreateClientId } from '../lib/clientId';
 export function usePixelWar() {
   const [pixels, setPixels] = useState(null); // Uint8Array(1M)
   const [version, setVersion] = useState(0);
-  const [stock, setStock] = useState({ stock: 10, max: 10, refillInMs: 0 });
+  const [stock, setStock] = useState({ unlimited: true });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedColor, setSelectedColor] = useState(3);
@@ -72,9 +72,9 @@ export function usePixelWar() {
     return () => clearInterval(t);
   }, [loading]);
 
-  // compte à rebours fluide du stock (1px / 3s)
+  // compte à rebours du stock (inactif en illimité)
   useEffect(() => {
-    if (stock.stock >= stock.max) return;
+    if (stock.unlimited || stock.stock >= stock.max) return;
     const t = setInterval(() => {
       setStock((s) => {
         const r = (s.refillInMs ?? 3000) - 500;
@@ -86,7 +86,7 @@ export function usePixelWar() {
       });
     }, 500);
     return () => clearInterval(t);
-  }, [stock.stock, stock.max]);
+  }, [stock.unlimited, stock.stock, stock.max]);
 
   const placePixel = useCallback(async (x, y) => {
     if (!pixelsRef.current) return;
@@ -103,11 +103,11 @@ export function usePixelWar() {
       const res = await api.place(clientId.current, [{ x, y, color: selectedColor }]);
       versionRef.current = res.version;
       setVersion(res.version);
-      setStock(res);
+      if (!res.unlimited) setStock(res);
     } catch (e) {
       if (e.status === 429 && e.data) {
         setStock(e.data);
-        setError(`Plus de pixels ! Recharge dans ${Math.ceil((e.data.refillInMs || 3000) / 1000)}s`);
+        setError('Plus de pixels pour le moment, réessaie dans quelques secondes');
         setTimeout(() => setError(null), 2500);
       } else {
         setError(e.message);

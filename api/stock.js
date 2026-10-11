@@ -1,3 +1,4 @@
+import { UNLIMITED } from './_lib/config.js';
 import { getStock } from './_lib/store.js';
 
 function cors(res) {
@@ -11,7 +12,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   const clientId = String(req.query?.clientId || '').slice(0, 64);
   if (!clientId) return res.status(400).json({ error: 'missing_clientId' });
-  const s = await getStock(clientId);
   res.setHeader('Cache-Control', 'no-store');
+  if (UNLIMITED) return res.status(200).json({ unlimited: true });
+  const s = await getStock(clientId);
   return res.status(200).json(s);
 }

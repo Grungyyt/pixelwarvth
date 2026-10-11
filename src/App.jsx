@@ -66,15 +66,21 @@ export default function App() {
         <div className="head-right">
           <button className="btn small" onClick={() => setPanelOpen(true)}>importer une image</button>
           <div className="stockbox">
-            <span className="pips">
-              {Array.from({ length: stock.max }).map((_, i) => (
-                <i key={i} className={i < stock.stock ? 'on' : ''} />
-              ))}
-            </span>
-            <span className="stocktxt">
-              {stock.stock}/{stock.max}
-              {stock.stock < stock.max ? ` — prochain dans ${refillSec}s` : ' — plein'}
-            </span>
+            {stock.unlimited ? (
+              <span className="stocktxt">∞ illimité</span>
+            ) : (
+              <>
+                <span className="pips">
+                  {Array.from({ length: stock.max }).map((_, i) => (
+                    <i key={i} className={i < stock.stock ? 'on' : ''} />
+                  ))}
+                </span>
+                <span className="stocktxt">
+                  {stock.stock}/{stock.max}
+                  {stock.stock < stock.max ? ` — prochain dans ${refillSec}s` : ' — plein'}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -93,7 +99,7 @@ export default function App() {
             pickMode={picking !== null}
             overlay={overlay}
             selectedColor={selectedColor}
-            disabled={placing || stock.stock <= 0}
+            disabled={placing}
           />
         )}
       </main>
@@ -102,7 +108,7 @@ export default function App() {
         <div className="jobbar">
           <span className="jobtxt">
             image {job.w}x{job.h} — {progress.done}/{progress.total} posés
-            {finished ? ' — terminé' : job.running ? ` — ~${etaText(remaining)} restantes` : ' — en pause'}
+            {finished ? ' — terminé' : job.running ? (stock.unlimited ? ` — reste ${remaining}` : ` — ~${etaText(remaining)} restantes`) : ' — en pause'}
           </span>
           <span className="jobprog"><i style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} /></span>
           {!finished && (
@@ -133,7 +139,7 @@ export default function App() {
             />
           ))}
         </div>
-        <div className="hint">clic = poser · molette = zoom · glisser = bouger · 10 pixels max, 1 rendu toutes les 3 sec</div>
+        <div className="hint">clic = poser · molette = zoom · glisser = bouger · pixels illimités</div>
       </footer>
 
       {panelOpen && (
@@ -143,6 +149,7 @@ export default function App() {
           picking={picking === 'draft'}
           setPicking={(v) => setPicking(v ? 'draft' : null)}
           onDraftSize={(w, h) => { draftSize.current = { w, h }; }}
+          unlimited={!!stock.unlimited}
           onStart={onStartBuild}
           onClose={() => { setPanelOpen(false); if (picking === 'draft') setPicking(null); }}
         />

@@ -1,7 +1,7 @@
 // Serveur API local (dev) : même logique que les fonctions Vercel.
 // Lance : node server.mjs  (port 3001) puis `npm run dev` dans un 2e terminal.
 import http from 'node:http';
-import { SIZE, PALETTE } from './api/_lib/config.js';
+import { SIZE, PALETTE, MAX_PIXELS_PER_REQUEST, UNLIMITED } from './api/_lib/config.js';
 import { getCanvasFull, getDiff, getStock, consumeStock, applyPixels, getVersion, storeKind, bytesToBase64 } from './api/_lib/store.js';
 
 const PORT = 3001;
@@ -46,6 +46,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/stock') {
       const clientId = String(url.searchParams.get('clientId') || '');
       if (!clientId) return send(res, 400, { error: 'missing_clientId' });
+      if (UNLIMITED) return send(res, 200, { unlimited: true });
       return send(res, 200, await getStock(clientId));
     }
     if (url.pathname === '/api/pixels' && req.method === 'POST') {
@@ -53,7 +54,7 @@ const server = http.createServer(async (req, res) => {
       const clientId = String(body.clientId || '');
       const pixels = body.pixels;
       if (!clientId || clientId.length < 8) return send(res, 400, { error: 'missing_clientId' });
-      if (!Array.isArray(pixels) || !pixels.length || pixels.length > 10) return send(res, 400, { error: 'bad_pixels' });
+      if (!Array.isArray(pixels) || !pixels.length || pixels.length > MAX_PIXELS_PER_REQUEST) return send(res, 400, { error: 'bad_pixels', max: MAX_PIXELS_PER_REQUEST });
       const seen = new Map();
       for (const p of pixels) {
         const x = Number(p.x), y = Number(p.y), color = Number(p.color);
@@ -63,9 +64,12 @@ const server = http.createServer(async (req, res) => {
         seen.set(`${x},${y}`, { x, y, color });
       }
       const clean = [...seen.values()];
-      const check = await consumeStock(clientId, clean.length);
-      if (!check.ok) return send(res, 429, { error: 'not_enough_stock', ...(await getStock(clientId)) });
+      if (!UNLIMITED) {
+        const check = await consumeStock(clientId, clean.length);
+        if (!check.ok) return send(res, 429, { error: 'not_enough_stock', ...(await getStock(clientId)) });
+      }
       const { version } = await applyPixels(clean);
+      if (UNLIMITED) return send(res, 200, { ok: true, version, accepted: clean.length, unlimited: true });
       return send(res, 200, { ok: true, version, accepted: clean.length, ...(await getStock(clientId)) });
     }
     return send(res, 404, { error: 'not_found' });

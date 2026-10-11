@@ -85,7 +85,7 @@ export function useImageBuilder(clientId, getPixels) {
     });
   }, []);
 
-  // boucle de construction : toutes les 4s, envoie ce que le stock permet (max 10)
+  // boucle de construction : toutes les 1.5s, gros batch (pas de limite de stock)
   useEffect(() => {
     if (!job?.running) return;
     let dead = false;
@@ -96,17 +96,9 @@ export function useImageBuilder(clientId, getPixels) {
       const idx = b64ToBytes(j.indicesB64);
       const px = getPixels();
       if (!px) return;
-      let s;
-      try {
-        s = await api.stock(clientId);
-      } catch {
-        return;
-      }
-      if (dead) return;
-      if (s.stock <= 0) return;
       const batch = [];
-      for (let jj = 0; jj < j.h && batch.length < Math.min(s.stock, 10); jj++) {
-        for (let ii = 0; ii < j.w && batch.length < Math.min(s.stock, 10); ii++) {
+      for (let jj = 0; jj < j.h && batch.length < 1000; jj++) {
+        for (let ii = 0; ii < j.w && batch.length < 1000; ii++) {
           const c = idx[jj * j.w + ii];
           if (c === TRANSPARENT) continue;
           const gx = j.x + ii;
@@ -121,13 +113,13 @@ export function useImageBuilder(clientId, getPixels) {
         setJob((cur) => (cur ? { ...cur, running: false } : cur));
         return;
       }
-      setBusy(true);
       busyRef.current = true;
+      setBusy(true);
       try {
         await api.place(clientId, batch);
-      } catch (e) {
+      } catch {
         if (!dead) {
-          setBuildErr(e?.data?.error === 'not_enough_stock' ? 'stock vide, pause…' : 'erreur réseau, on réessaie');
+          setBuildErr('erreur réseau, on réessaie');
           setTimeout(() => !dead && setBuildErr(null), 3000);
         }
       } finally {
@@ -135,7 +127,7 @@ export function useImageBuilder(clientId, getPixels) {
         if (!dead) setBusy(false);
       }
     };
-    const t = setInterval(tick, 4000);
+    const t = setInterval(tick, 1500);
     tick();
     return () => { dead = true; clearInterval(t); };
   }, [job?.running, clientId, getPixels]);

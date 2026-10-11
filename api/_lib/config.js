@@ -22,14 +22,14 @@ export const PALETTE = [
   '#820080', // 15 dark purple
 ];
 
-// Stock : 10 pixels max, +1 toutes les 3s => 10 pixels / 30s.
-// Si tu veux "full refill 10 toutes les 30s" au lieu du token bucket,
-// mets REFILL_INTERVAL_MS = 30000 et REFILL_AMOUNT = 10 dans store.js.
+// Stock : désactivé (pixels illimités). Pour réactiver la limite,
+// mets UNLIMITED = false (10 max, +1 toutes les 3s = 10 / 30s).
+export const UNLIMITED = true;
 export const MAX_STOCK = 10;
 export const REFILL_INTERVAL_MS = 3000; // 1 pixel / 3s
 export const REFILL_AMOUNT = 1;
 
-export const MAX_PIXELS_PER_REQUEST = 10;
+export const MAX_PIXELS_PER_REQUEST = 4096;
 export const DIFF_LOG_CAP = 20000;
 export const CHUNK_COUNT = 64; // 64 chunks x 16 lignes x 1024 = 1Mo total
 export const ROWS_PER_CHUNK = SIZE / CHUNK_COUNT;

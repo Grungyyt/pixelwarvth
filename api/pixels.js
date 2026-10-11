@@ -1,4 +1,4 @@
-import { SIZE, PALETTE, MAX_PIXELS_PER_REQUEST } from './_lib/config.js';
+import { SIZE, PALETTE, MAX_PIXELS_PER_REQUEST, UNLIMITED } from './_lib/config.js';
 import { consumeStock, applyPixels, getStock } from './_lib/store.js';
 
 function cors(res) {
@@ -44,14 +44,17 @@ export default async function handler(req, res) {
   }
   const clean = [...seen.values()];
 
-  const check = await consumeStock(clientId, clean.length);
-  if (!check.ok) {
-    const s = await getStock(clientId);
-    return res.status(429).json({ error: 'not_enough_stock', ...s });
+  if (!UNLIMITED) {
+    const check = await consumeStock(clientId, clean.length);
+    if (!check.ok) {
+      const s = await getStock(clientId);
+      return res.status(429).json({ error: 'not_enough_stock', ...s });
+    }
   }
 
   try {
     const { version } = await applyPixels(clean);
+    if (UNLIMITED) return res.status(200).json({ ok: true, version, accepted: clean.length, unlimited: true });
     const s = await getStock(clientId);
     return res.status(200).json({ ok: true, version, accepted: clean.length, ...s });
   } catch (e) {

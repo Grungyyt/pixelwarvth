@@ -1,6 +1,6 @@
 # pixelwar — 1024x1024
 
-Canvas collectif 1024x1024. Chacun pose des pixels, stock de 10, 1 rendu toutes les 3 secondes.
+Canvas collectif 1024x1024. Chacun pose des pixels, sans limite.
 
 ## Ca tourne comment
 
@@ -65,6 +65,8 @@ palette 16 couleurs (le transparent est ignoré), un fantôme s'affiche sur
 le canvas, et la construction pose les pixels toute seule au rythme du
 stock (pauses/reprise/déplacement possibles, survit au reload).
 
-## Régler le stock
+## Limite de pixels
 
-Voir `api/_lib/config.js` : `MAX_STOCK = 10`, `REFILL_INTERVAL_MS = 3000`.
+Pas de limite (`UNLIMITED = true` dans `api/_lib/config.js`, max 4096
+pixels par requête). Pour remettre un stock façon r/place, passe
+`UNLIMITED = false` (10 max, +1 toutes les 3s).
